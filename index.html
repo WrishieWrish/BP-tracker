@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>BP Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{--bg:#f3f6fb;--panel:#fff;--ink:#172033;--muted:#69758a;--line:#e4e9f1;--accent:#2867d7;--accent-soft:#eaf1ff;--green:#16845b;--red:#bd3c45;--amber:#a66a12;--shadow:0 12px 34px rgba(25,42,70,.07)}
+    [data-theme="dark"]{--bg:#101827;--panel:#182337;--ink:#edf3ff;--muted:#a4b1c6;--line:#2a3850;--accent:#80aaff;--accent-soft:#243653;--green:#58c99b;--red:#ff8188;--amber:#e6b35f;--shadow:0 12px 34px rgba(0,0,0,.18)}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",sans-serif;font-size:16px;line-height:1.5}
+    button,input,select,textarea{font:inherit}button{cursor:pointer}.wrap{max-width:1160px;margin:auto;padding:24px 20px 56px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:26px}.brand{display:flex;align-items:center;gap:12px}.logo{width:46px;height:46px;border-radius:15px;background:var(--accent);display:grid;place-items:center;color:white;font-size:23px;font-weight:800}.brand h1{font:800 22px Manrope;margin:0;letter-spacing:-.5px}.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}.header-actions{display:flex;gap:9px;align-items:center}
+    .btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:10px 14px;border-radius:12px;font-weight:700}.btn.primary{background:var(--accent);border-color:var(--accent);color:white}.btn:disabled{opacity:.5;cursor:not-allowed}.btn.small{padding:7px 10px;font-size:13px}
+    .notice{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:13px 16px;color:var(--muted);font-size:14px;margin-bottom:18px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:19px;padding:20px;box-shadow:var(--shadow)}.span-12{grid-column:span 12}.span-8{grid-column:span 8}.span-6{grid-column:span 6}.span-4{grid-column:span 4}
+    .section-title{font:800 17px Manrope;margin:0 0 14px}.sub{color:var(--muted);font-size:13px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{background:var(--bg);border:1px solid var(--line);border-radius:15px;padding:15px}.stat .label{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px}.stat .value{font:800 31px Manrope;margin:4px 0 0;letter-spacing:-1px}.stat .unit{font-size:12px;color:var(--muted);font-weight:500}
+    .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.field label{display:block;font-size:13px;font-weight:700;margin:0 0 6px}.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:var(--bg);color:var(--ink);outline:none}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}.field textarea{min-height:72px;resize:vertical}.form-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}.form-bottom .sub{max-width:520px}
+    .chart-wrap{height:270px;position:relative}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:580px}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);font-size:14px}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}td strong{font-weight:800}.pill{display:inline-block;padding:4px 9px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700}.muted{color:var(--muted)}.row-actions{display:flex;gap:6px}.empty{text-align:center;padding:28px;color:var(--muted)}
+    .auth{max-width:440px;margin:7vh auto}.auth .card{padding:26px}.auth h2{font:800 24px Manrope;margin:0 0 5px}.auth .field{margin-top:13px}.auth .btn{width:100%;margin-top:16px}.auth-switch{text-align:center;margin-top:15px;color:var(--muted);font-size:14px}.link{color:var(--accent);font-weight:700;cursor:pointer}.hidden{display:none!important}.status{font-size:13px;margin-top:10px;color:var(--muted);min-height:18px}.status.error{color:var(--red)}.status.good{color:var(--green)}
+    .alert{border-left:4px solid var(--amber);background:color-mix(in srgb,var(--amber) 10%,var(--panel));padding:12px 14px;border-radius:10px;margin-top:14px;font-size:14px}.alert.danger{border-color:var(--red);background:color-mix(in srgb,var(--red) 9%,var(--panel))}
+    footer{color:var(--muted);font-size:12px;text-align:center;margin:24px 0 0}.topline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    @media(max-width:800px){.span-8,.span-6,.span-4{grid-column:span 12}.wrap{padding:17px 13px 40px}.card{padding:16px}.stats{gap:8px}.stat{padding:12px}.stat .value{font-size:25px}.form-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:480px){header{align-items:flex-start}.brand h1{font-size:19px}.header-actions{gap:6px}.header-actions .btn{padding:8px 9px;font-size:12px}.form-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:span 2}.form-bottom{align-items:stretch;flex-direction:column}.form-bottom .btn{width:100%}}
+    @media print{body{background:white;color:#111}.wrap{max-width:none;padding:0}.header-actions,.entry-card,.row-actions,.notice button,footer{display:none!important}.card{box-shadow:none;break-inside:avoid;border:1px solid #ddd}.span-8,.span-6,.span-4{grid-column:span 12}.grid{gap:10px}.table-wrap{overflow:visible}table{min-width:0}th,td{font-size:11px;padding:7px}}
+  </style>
+</head>
+<body>
+  <main id="authView" class="auth wrap">
+    <div class="brand" style="margin-bottom:18px"><div class="logo">+</div><div><h1>BP Tracker</h1><p>Personal blood pressure log</p></div></div>
+    <section class="card">
+      <h2 id="authTitle">Sign in</h2><div class="sub">Secure access to your family's blood pressure records.</div>
+      <form id="authForm">
+        <div class="field"><label for="email">Email address</label><input id="email" type="email" autocomplete="username" required placeholder="you@example.com"></div>
+        <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required minlength="6" placeholder="At least 6 characters"></div>
+        <button class="btn primary" id="authSubmit" type="submit">Sign in</button>
+      </form>
+      <div class="auth-switch"><span id="authHint">First time here?</span> <span class="link" id="authToggle">Create account</span></div>
+      <div id="authStatus" class="status" role="status"></div>
+    </section>
+    <p class="sub" style="text-align:center;margin-top:15px">Your readings are stored in your private cloud account.</p>
+  </main>
+
+  <div id="appView" class="hidden">
+    <div class="wrap">
+      <header>
+        <div class="brand"><div class="logo">+</div><div><h1>BP Tracker</h1><p>Grandpa's health log</p></div></div>
+        <div class="header-actions"><button class="btn" id="themeBtn" aria-label="Toggle theme">☾ Theme</button><button class="btn" id="exportBtn">Export CSV</button><button class="btn" id="printBtn">PDF / Print</button><button class="btn" id="logoutBtn">Sign out</button></div>
+      </header>
+      <div class="notice">Enter each reading after the measurement. For consistency, take readings at similar times each morning and evening, following the monitor's instructions.</div>
+      <div class="grid">
+        <section class="card span-12">
+          <div class="topline"><div><h2 class="section-title" style="margin:0">Overview</h2><div class="sub" id="rangeLabel">All recorded readings</div></div><select id="rangeSelect" class="btn"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option></select></div>
+          <div class="stats">
+            <div class="stat"><div class="label">Average SYS</div><div class="value" id="avgSys">—</div><div class="unit">mmHg</div></div>
+            <div class="stat"><div class="label">Average DIA</div><div class="value" id="avgDia">—</div><div class="unit">mmHg</div></div>
+            <div class="stat"><div class="label">Average pulse</div><div class="value" id="avgPulse">—</div><div class="unit">beats/min</div></div>
+            <div class="stat"><div class="label">Pulse pressure</div><div class="value" id="avgPP">—</div><div class="unit">mmHg · average SYS − DIA</div></div>
+            <div class="stat"><div class="label">Estimated MAP</div><div class="value" id="avgMap">—</div><div class="unit">mmHg · estimated</div></div>
+            <div class="stat"><div class="label">Readings</div><div class="value" id="countReadings">0</div><div class="unit">in selected period</div></div>
+          </div>
+          <div id="readingAlert" class="alert hidden"></div>
+        </section>
+
+        <section class="card span-8">
+          <h2 class="section-title">Blood pressure trend</h2><div class="sub" style="margin-top:-9px;margin-bottom:12px">SYS and DIA over time</div>
+          <div class="chart-wrap"><canvas id="bpChart" aria-label="Blood pressure trend chart"></canvas></div>
+        </section>
+        <section class="card span-4">
+          <h2 class="section-title">Pulse trend</h2><div class="sub" style="margin-top:-9px;margin-bottom:12px">Heart rate in beats/min</div>
+          <div class="chart-wrap"><canvas id="pulseChart" aria-label="Pulse trend chart"></canvas></div>
+        </section>
+
+        <section class="card span-12 entry-card">
+          <h2 class="section-title" id="formTitle">Add a reading</h2>
+          <form id="readingForm">
+            <div class="form-grid">
+              <div class="field"><label for="sys">Systolic · SYS (mmHg)</label><input id="sys" type="number" min="50" max="300" step="1" required placeholder="e.g. 120"></div>
+              <div class="field"><label for="dia">Diastolic · DIA (mmHg)</label><input id="dia" type="number" min="30" max="200" step="1" required placeholder="e.g. 80"></div>
+              <div class="field"><label for="pulse">Pulse (beats/min)</label><input id="pulse" type="number" min="25" max="250" step="1" required placeholder="e.g. 72"></div>
+              <div class="field"><label for="takenAt">Date and time</label><input id="takenAt" type="datetime-local" required></div>
+              <div class="field"><label for="period">Session</label><select id="period"><option value="Morning">Morning</option><option value="Evening">Evening</option><option value="Other">Other</option></select></div>
+              <div class="field"><label for="notes">Notes (optional)</label><input id="notes" type="text" maxlength="250" placeholder="Medication, symptoms, activity…"></div>
+            </div>
+            <div class="form-bottom"><div class="sub">Save each measurement as a separate record. If you take multiple readings in one sitting, record each one and note the sequence.</div><div style="display:flex;gap:8px"><button type="button" class="btn hidden" id="cancelEdit">Cancel</button><button type="submit" class="btn primary" id="saveReading">Save reading</button></div></div>
+            <div id="readingStatus" class="status" role="status"></div>
+          </form>
+        </section>
+
+        <section class="card span-12">
+          <div class="topline"><div><h2 class="section-title" style="margin:0">Reading history</h2><div class="sub">Newest readings first</div></div><span class="pill" id="historyCount">0 records</span></div>
+          <div class="table-wrap"><table><thead><tr><th>Date & time</th><th>Session</th><th>SYS</th><th>DIA</th><th>Pulse</th><th>Pulse pressure</th><th>Notes</th><th>Actions</th></tr></thead><tbody id="historyBody"><tr><td colspan="8" class="empty">No readings yet. Add the first reading above.</td></tr></tbody></table></div>
+        </section>
+      </div>
+      <footer>For tracking and discussion with a healthcare professional only. Not a diagnostic device or substitute for medical advice.</footer>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // Add your Supabase project URL and anon/publishable key here.
+  const SUPABASE_URL = "https://dprfznkdhpzxlrgyqggp.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_MZmc-myXRx2G3PN2LT6fZg_CkUDMUa-";
+  const configured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
+  let db = null, readings = [], editingId = null, isSignup = false, bpChart = null, pulseChart = null, realtime = null;
+  const $ = id => document.getElementById(id);
+  const setStatus = (id, msg, type="") => { $(id).textContent = msg; $(id).className = "status " + type; };
+  const localDateTime = d => { const x = new Date(d.getTime()-d.getTimezoneOffset()*60000); return x.toISOString().slice(0,16); };
+  const fmtDate = v => new Date(v).toLocaleString([], {dateStyle:"medium",timeStyle:"short"});
+  const round = n => Math.round(n*10)/10;
+  const mean = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+  const theme = localStorage.getItem("bp-theme") || "light";
+  document.documentElement.dataset.theme = theme;
+  $("themeBtn").textContent = theme === "dark" ? "☀ Light" : "☾ Dark";
+  $("themeBtn").onclick = () => { const t=document.documentElement.dataset.theme==="dark"?"light":"dark"; document.documentElement.dataset.theme=t;localStorage.setItem("bp-theme",t);$("themeBtn").textContent=t==="dark"?"☀ Light":"☾ Dark"; renderCharts(); };
+
+  function showApp(){ $("authView").classList.add("hidden");$("appView").classList.remove("hidden"); }
+  function showAuth(){ $("appView").classList.add("hidden");$("authView").classList.remove("hidden"); }
+  function updateAuthMode(){ $("authTitle").textContent=isSignup?"Create your account":"Sign in";$("authSubmit").textContent=isSignup?"Create account":"Sign in";$("authHint").textContent=isSignup?"Already have an account?":"First time here?";$("authToggle").textContent=isSignup?"Sign in":"Create account";$("password").autocomplete=isSignup?"new-password":"current-password"; }
+  $("authToggle").onclick=()=>{isSignup=!isSignup;updateAuthMode();setStatus("authStatus","");};
+  $("authForm").onsubmit=async e=>{e.preventDefault();if(!configured){setStatus("authStatus","Add your Supabase URL and anon key in index.html first.","error");return;}const email=$("email").value.trim(),password=$("password").value; $("authSubmit").disabled=true;setStatus("authStatus",isSignup?"Creating account…":"Signing in…");try{const result=isSignup?await db.auth.signUp({email,password}):await db.auth.signInWithPassword({email,password});if(result.error)throw result.error;if(isSignup&&!result.data.session){setStatus("authStatus","Account created. Check your email to confirm it, then sign in.","good");}else{setStatus("authStatus","");await startApp();}}catch(err){setStatus("authStatus",err.message,"error");}finally{$("authSubmit").disabled=false;}};
+  $("logoutBtn").onclick=async()=>{if(realtime)await db.removeChannel(realtime);await db.auth.signOut();readings=[];showAuth();};
+  $("takenAt").value=localDateTime(new Date());
+
+  async function startApp(){showApp();await loadReadings();subscribe();}
+  async function loadReadings(){const {data,error}=await db.from("bp_readings").select("*").order("taken_at",{ascending:false});if(error){alert("Could not load readings: "+error.message);return;}readings=data||[];render();}
+  function subscribe(){if(realtime)db.removeChannel(realtime);realtime=db.channel("bp-readings-sync").on("postgres_changes",{event:"*",schema:"public",table:"bp_readings"},()=>loadReadings()).subscribe();}
+  function filtered(){const n=$("rangeSelect").value;if(n==="all")return readings;const cutoff=Date.now()-Number(n)*86400000;return readings.filter(r=>new Date(r.taken_at).getTime()>=cutoff);}
+  function render(){const data=filtered();$("rangeLabel").textContent=$("rangeSelect").selectedOptions[0].text+" · "+data.length+" readings";$("countReadings").textContent=data.length;$("historyCount").textContent=readings.length+" records";
+    const sys=data.map(r=>Number(r.sys)),dia=data.map(r=>Number(r.dia)),pulse=data.map(r=>Number(r.pulse)),pp=data.map(r=>Number(r.sys)-Number(r.dia)),maps=data.map(r=>(Number(r.sys)+2*Number(r.dia))/3);
+    $("avgSys").textContent=mean(sys)===null?"—":round(mean(sys));$("avgDia").textContent=mean(dia)===null?"—":round(mean(dia));$("avgPulse").textContent=mean(pulse)===null?"—":round(mean(pulse));$("avgPP").textContent=mean(pp)===null?"—":round(mean(pp));$("avgMap").textContent=mean(maps)===null?"—":round(mean(maps));
+    const alertBox=$("readingAlert");const high=data.filter(r=>Number(r.sys)>=180||Number(r.dia)>=120);const low=data.filter(r=>Number(r.sys)<90||Number(r.dia)<60);if(high.length){alertBox.className="alert danger";alertBox.textContent="One or more readings in this period are in a very high range (SYS ≥180 or DIA ≥120). Repeat the measurement after at least 1 minute. If it remains this high, contact a healthcare professional promptly; seek emergency help if there are symptoms such as chest pain, breathlessness, weakness, numbness, vision changes or difficulty speaking.";}else if(low.length){alertBox.className="alert";alertBox.textContent="One or more readings are low (SYS <90 or DIA <60). Consider symptoms and discuss repeated low readings with a healthcare professional.";}else{alertBox.classList.add("hidden");}
+    renderHistory();renderCharts(data);
+  }
+  function renderHistory(){const body=$("historyBody");if(!readings.length){body.innerHTML='<tr><td colspan="8" class="empty">No readings yet. Add the first reading above.</td></tr>';return;}body.innerHTML=readings.map(r=>`<tr><td>${fmtDate(r.taken_at)}</td><td><span class="pill">${escapeHtml(r.session)}</span></td><td><strong>${r.sys}</strong></td><td><strong>${r.dia}</strong></td><td>${r.pulse}</td><td>${Number(r.sys)-Number(r.dia)}</td><td>${escapeHtml(r.notes||"—")}</td><td><div class="row-actions"><button class="btn small" data-edit="${r.id}">Edit</button><button class="btn small" data-delete="${r.id}">Delete</button></div></td></tr>`).join("");}
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  function renderCharts(data=filtered()){const ordered=[...data].sort((a,b)=>new Date(a.taken_at)-new Date(b.taken_at));const labels=ordered.map(r=>new Date(r.taken_at).toLocaleDateString([],{month:"short",day:"numeric"}));const common={responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:"index"},plugins:{legend:{labels:{color:getComputedStyle(document.documentElement).getPropertyValue("--muted")}}},scales:{x:{ticks:{color:getComputedStyle(document.documentElement).getPropertyValue("--muted")},grid:{display:false}},y:{ticks:{color:getComputedStyle(document.documentElement).getPropertyValue("--muted")},grid:{color:getComputedStyle(document.documentElement).getPropertyValue("--line")}}}};
+    if(bpChart)bpChart.destroy();if(pulseChart)pulseChart.destroy();const c1=$("bpChart").getContext("2d"),c2=$("pulseChart").getContext("2d");bpChart=new Chart(c1,{type:"line",data:{labels,datasets:[{label:"SYS",data:ordered.map(r=>r.sys),borderColor:"#dc6b54",backgroundColor:"#dc6b54",tension:.3,pointRadius:3},{label:"DIA",data:ordered.map(r=>r.dia),borderColor:"#4387d8",backgroundColor:"#4387d8",tension:.3,pointRadius:3}]},options:common});pulseChart=new Chart(c2,{type:"line",data:{labels,datasets:[{label:"Pulse",data:ordered.map(r=>r.pulse),borderColor:"#239a78",backgroundColor:"#239a78",tension:.3,pointRadius:3}]},options:common});}
+  $("rangeSelect").onchange=render;
+  $("readingForm").onsubmit=async e=>{e.preventDefault();const sys=Number($("sys").value),dia=Number($("dia").value),pulse=Number($("pulse").value);if(sys<=dia){setStatus("readingStatus","SYS should normally be higher than DIA. Check the entered values.","error");return;}const payload={sys,dia,pulse,taken_at:new Date($("takenAt").value).toISOString(),session:$("period").value,notes:$("notes").value.trim()||null};$("saveReading").disabled=true;try{let result;if(editingId)result=await db.from("bp_readings").update(payload).eq("id",editingId);else result=await db.from("bp_readings").insert(payload);if(result.error)throw result.error;resetForm();await loadReadings();setStatus("readingStatus","Reading saved and synchronized.","good");}catch(err){setStatus("readingStatus",err.message,"error");}finally{$("saveReading").disabled=false;}};
+  function resetForm(){editingId=null;$("readingForm").reset();$("takenAt").value=localDateTime(new Date());$("formTitle").textContent="Add a reading";$("saveReading").textContent="Save reading";$("cancelEdit").classList.add("hidden");}
+  $("cancelEdit").onclick=resetForm;
+  $("historyBody").onclick=async e=>{const edit=e.target.dataset.edit,del=e.target.dataset.delete;if(edit){const r=readings.find(x=>x.id===edit);if(!r)return;editingId=edit;$("sys").value=r.sys;$("dia").value=r.dia;$("pulse").value=r.pulse;$("takenAt").value=localDateTime(new Date(r.taken_at));$("period").value=r.session;$("notes").value=r.notes||"";$("formTitle").textContent="Edit reading";$("saveReading").textContent="Update reading";$("cancelEdit").classList.remove("hidden");$("sys").scrollIntoView({behavior:"smooth",block:"center"});}if(del&&confirm("Delete this reading permanently?")){const {error}=await db.from("bp_readings").delete().eq("id",del);if(error)alert(error.message);else await loadReadings();}};
+  $("exportBtn").onclick=()=>{const rows=[["Date/time","Session","SYS mmHg","DIA mmHg","Pulse/min","Notes"],...readings.map(r=>[r.taken_at,r.session,r.sys,r.dia,r.pulse,r.notes||""])];const csv=rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="bp-readings.csv";a.click();URL.revokeObjectURL(a.href);};
+  $("printBtn").onclick=()=>window.print();
+
+  if(configured){db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);db.auth.getSession().then(({data})=>{if(data.session)startApp();});db.auth.onAuthStateChange((_event,session)=>{if(session&&!$("appView").classList.contains("hidden"))return;if(session)startApp();});}
+  else {setStatus("authStatus","Setup needed: follow README.md to create your free Supabase project and add its URL and anon key.","error");}
+})();
+</script>
+</body>
+</html>
