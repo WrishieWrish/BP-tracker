@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#12203a">
+<title>BP Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#f1f5f9;--panel:#fff;--ink:#12203a;--muted:#55637b;--line:#d9e1ec;--accent:#1d5fc4;--on:#fff;--soft:#e6eefb;--green:#0f7a55;--red:#b3303a;--amber:#9a5c08;--morning:#b86a00;--evening:#4b4fb8}
+[data-theme=dark]{--bg:#0e1626;--panel:#162236;--ink:#eef3ff;--muted:#aab7cc;--line:#2a3a54;--accent:#80aaff;--on:#0e1626;--soft:#21334f;--green:#5ccb9f;--red:#ff8a90;--amber:#eab463;--morning:#f0b45a;--evening:#a5a9ff}
+html{font-size:18px}html[data-size=big]{font-size:22px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:1rem/1.5 "DM Sans",system-ui,sans-serif}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.wrap{max-width:1080px;margin:auto;padding:1rem 1rem 3rem}
+h1,h2{font-family:Manrope,sans-serif;margin:0}
+.sub{color:var(--muted);font-size:.82rem}
+.btn{min-height:2.7rem;padding:.5rem 1rem;border:1.5px solid var(--line);background:var(--panel);border-radius:.8rem;font-weight:700}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on)}
+.btn.small{min-height:2.2rem;padding:.3rem .7rem;font-size:.8rem}
+.btn:disabled{opacity:.5}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:1rem}
+.brand{display:flex;align-items:center;gap:.7rem}
+.logo{width:2.8rem;height:2.8rem;border-radius:.9rem;background:var(--accent);color:var(--on);display:grid;place-items:center;font:800 1.5rem Manrope}
+.brand h1{font-size:1.35rem}
+.tools{display:flex;flex-wrap:wrap;gap:.5rem}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:1.1rem;padding:1.2rem;margin-bottom:1rem}
+.card h2{font-size:1.15rem;margin-bottom:.2rem}
+.head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.9rem}
+select.btn{padding-right:.6rem}
+/* entry form */
+.entry{border:2px solid var(--accent)}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:.8rem 0}
+.field label{display:block;font-weight:700;font-size:.9rem;margin-bottom:.3rem}
+.field input[type=number],.field input[type=text],.field input[type=password],.field input[type=datetime-local]{width:100%;min-height:3.2rem;padding:.5rem .8rem;border:1.5px solid var(--line);border-radius:.8rem;background:var(--bg)}
+.nums input{font:800 1.9rem Manrope;text-align:center}
+.field input:focus{border-color:var(--accent);outline:3px solid var(--soft)}
+.seg{display:flex;gap:.5rem}.seg label{position:relative;flex:1}
+.seg input{position:absolute;opacity:0;inset:0;margin:0}
+.seg span{display:block;text-align:center;padding:.65rem .4rem;border:1.5px solid var(--line);border-radius:.8rem;font-weight:700;background:var(--bg)}
+.seg input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--on)}
+.seg input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem}
+.actions{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.actions .primary{flex:1;min-height:3.3rem;font-size:1.05rem}
+.status{min-height:1.4rem;margin-top:.6rem;font-weight:500}.status.good{color:var(--green)}.status.error{color:var(--red)}
+.sitting{margin:.2rem 0 .8rem;font-size:.9rem;color:var(--muted)}
+/* averages */
+.avgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:.8rem}
+.avg{border:1px solid var(--line);border-radius:1rem;padding:1rem;background:var(--bg)}
+.avg-h{display:flex;gap:.6rem;align-items:center;margin-bottom:.5rem}
+.avg-h b{display:block;line-height:1.2}
+.ic{font-size:1.5rem}
+.big{font:800 2.4rem/1.1 Manrope;letter-spacing:-1px}.big i{font-style:normal;color:var(--muted);font-weight:500;margin:0 .1rem}
+.avg.m{border-top:4px solid var(--morning)}.avg.e{border-top:4px solid var(--evening)}.avg.d{border-top:4px solid var(--green)}.avg.a{border-top:4px solid var(--accent)}
+.line{font-size:.9rem;margin-top:.25rem}
+.alert{border-left:4px solid var(--amber);background:var(--bg);padding:.8rem 1rem;border-radius:.7rem;margin-top:.9rem;font-size:.9rem}.alert.danger{border-color:var(--red)}
+/* charts and tables */
+.charts{display:grid;grid-template-columns:2fr 1fr;gap:1rem}.charts .card{margin:0}
+.chart-wrap{height:260px;position:relative;margin-top:.6rem}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:560px}
+th,td{text-align:left;padding:.7rem .6rem;border-bottom:1px solid var(--line);font-size:.9rem}th{color:var(--muted);font-weight:700}
+.pill{display:inline-block;padding:.15rem .6rem;border-radius:99px;background:var(--soft);color:var(--accent);font-size:.78rem;font-weight:700}
+.empty{text-align:center;color:var(--muted);padding:1.5rem}
+.row-actions{display:flex;gap:.4rem}
+.list{margin-top:1rem}
+/* login */
+.auth{max-width:430px;margin:8vh auto 0}
+.auth .card{padding:1.6rem}.auth h2{font-size:1.5rem;margin-bottom:.3rem}
+.key-row{display:flex;gap:.5rem;margin:1rem 0 .3rem}.key-row input{flex:1;font-size:1.3rem;letter-spacing:2px}
+.auth .primary{width:100%;min-height:3.4rem;font-size:1.1rem;margin-top:.6rem}
+footer{color:var(--muted);font-size:.75rem;text-align:center;margin-top:1.5rem}
+@media(max-width:760px){.charts{grid-template-columns:1fr}.big{font-size:2.1rem}}
+@media(max-width:480px){.nums{gap:.5rem}.nums input{font-size:1.5rem;padding:.4rem}.row2{grid-template-columns:1fr}}
+@media print{body{background:#fff;color:#111}.tools,.entry,.row-actions,footer{display:none!important}.card{border:1px solid #ccc;break-inside:avoid}.charts{grid-template-columns:1fr 1fr}.table-wrap{overflow:visible}table{min-width:0}th,td{font-size:10px;padding:5px}}
+</style>
+</head>
+<body>
+<main id="authView" class="auth wrap">
+  <div class="brand" style="margin-bottom:1rem"><div class="logo">+</div><div><h1>BP Tracker</h1><div class="sub">Grandpa's health log</div></div></div>
+  <section class="card">
+    <h2>Enter the family key</h2>
+    <div class="sub">Type the key once. This device will stay signed in.</div>
+    <form id="authForm">
+      <div class="key-row">
+        <input id="key" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" aria-label="Family key" placeholder="Family key" required autofocus>
+        <button type="button" class="btn" id="showKey">Show</button>
+      </div>
+      <button class="btn primary" id="authSubmit" type="submit">Open the log</button>
+    </form>
+    <div id="authStatus" class="status" role="status"></div>
+  </section>
+</main>
+
+<div id="appView" class="hidden">
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="logo">+</div><div><h1>BP Tracker</h1><div class="sub">Grandpa's health log</div></div></div>
+    <div class="tools">
+      <button class="btn small" id="sizeBtn" aria-label="Change text size">Bigger text</button>
+      <button class="btn small" id="themeBtn">Dark</button>
+      <button class="btn small" id="exportBtn">Export CSV</button>
+      <button class="btn small" id="printBtn">Print or PDF</button>
+      <button class="btn small" id="logoutBtn">Sign out</button>
+    </div>
+  </header>
+
+  <section class="card entry entry-card">
+    <h2 id="formTitle">Add a reading</h2>
+    <div class="sub">Take 3 readings each sitting and save each one on its own. Pulse is optional.</div>
+    <form id="readingForm">
+      <div class="nums">
+        <div class="field"><label for="sys">Upper (SYS)</label><input id="sys" type="number" inputmode="numeric" min="50" max="300" required placeholder="120"></div>
+        <div class="field"><label for="dia">Lower (DIA)</label><input id="dia" type="number" inputmode="numeric" min="30" max="200" required placeholder="80"></div>
+        <div class="field"><label for="pulse">Pulse (optional)</label><input id="pulse" type="number" inputmode="numeric" min="25" max="250" placeholder="72"></div>
+      </div>
+      <div class="field" style="margin-bottom:.8rem"><label>Session</label>
+        <div class="seg" role="radiogroup" aria-label="Session">
+          <label><input type="radio" name="period" value="Morning"><span>☀ Morning</span></label>
+          <label><input type="radio" name="period" value="Evening"><span>☾ Evening</span></label>
+          <label><input type="radio" name="period" value="Other"><span>Other</span></label>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="takenAt">Date and time</label><input id="takenAt" type="datetime-local" required></div>
+        <div class="field"><label for="notes">Notes (optional)</label><input id="notes" type="text" maxlength="250" placeholder="Medicine, symptoms, activity"></div>
+      </div>
+      <div id="sitting" class="sitting"></div>
+      <div class="actions"><button type="button" class="btn hidden" id="cancelEdit">Cancel</button><button type="submit" class="btn primary" id="saveReading">Save reading</button></div>
+      <div id="readingStatus" class="status" role="status"></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="head"><div><h2>Averages</h2><div class="sub" id="rangeLabel"></div></div>
+      <select id="rangeSelect" class="btn" aria-label="Period"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option></select></div>
+    <div class="avgs" id="avgs"></div>
+    <div id="readingAlert" class="alert hidden"></div>
+  </section>
+
+  <div class="charts" style="margin-bottom:1rem">
+    <section class="card"><h2>Blood pressure trend</h2><div class="sub">Upper and lower numbers over time</div><div class="chart-wrap"><canvas id="bpChart" aria-label="Blood pressure chart"></canvas></div></section>
+    <section class="card"><h2>Pulse trend</h2><div class="sub">Beats per minute</div><div class="chart-wrap"><canvas id="pulseChart" aria-label="Pulse chart"></canvas></div></section>
+  </div>
+
+  <section class="card">
+    <div class="head"><div><h2>Daily summary</h2><div class="sub">Average of each morning and evening sitting. "Other" readings are not included.</div></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>☀ Morning</th><th>☾ Evening</th></tr></thead><tbody id="dailyBody"></tbody></table></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><div><h2>All readings</h2><div class="sub">Newest first</div></div><span class="pill" id="historyCount">0 records</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Date and time</th><th>Session</th><th>SYS</th><th>DIA</th><th>Pulse</th><th>PP</th><th>Notes</th><th></th></tr></thead><tbody id="historyBody"></tbody></table></div>
+  </section>
+  <footer>For tracking and discussion with a doctor only. Not a diagnostic device or medical advice.</footer>
+</div>
+</div>
+
+<script>
+(() => {
+  const SUPABASE_URL = "https://dprfznkdhpzxlrgyqggp.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_MZmc-myXRx2G3PN2LT6fZg_CkUDMUa-";
+  // The login email of your existing account. The family key is that account's password.
+  const FAMILY_EMAIL = "YOUR_LOGIN_EMAIL_HERE";
+
+  const configured = !FAMILY_EMAIL.includes("YOUR_");
+  let db = null, readings = [], editingId = null, bpChart = null, pulseChart = null, realtime = null;
+  const $ = id => document.getElementById(id);
+  const setStatus = (id, msg, type = "") => { $(id).textContent = msg; $(id).className = "status " + type; };
+  const localDateTime = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const fmtDate = v => new Date(v).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+  const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+  const f = v => v === null ? "—" : Math.round(v);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const pulseOf = r => r.pulse == null ? null : Number(r.pulse);
+
+  /* ---------- look and feel ---------- */
+  const root = document.documentElement;
+  root.dataset.theme = localStorage.getItem("bp-theme") || "light";
+  root.dataset.size = localStorage.getItem("bp-size") || "normal";
+  const syncBtns = () => { $("themeBtn").textContent = root.dataset.theme === "dark" ? "Light" : "Dark"; $("sizeBtn").textContent = root.dataset.size === "big" ? "Smaller text" : "Bigger text"; };
+  syncBtns();
+  $("themeBtn").onclick = () => { root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark"; localStorage.setItem("bp-theme", root.dataset.theme); syncBtns(); renderCharts(); };
+  $("sizeBtn").onclick = () => { root.dataset.size = root.dataset.size === "big" ? "normal" : "big"; localStorage.setItem("bp-size", root.dataset.size); syncBtns(); };
+
+  /* ---------- key-only sign in ---------- */
+  const showApp = () => { $("authView").classList.add("hidden"); $("appView").classList.remove("hidden"); };
+  const showAuth = () => { $("appView").classList.add("hidden"); $("authView").classList.remove("hidden"); };
+  $("showKey").onclick = () => { const p = $("key").type === "password"; $("key").type = p ? "text" : "password"; $("showKey").textContent = p ? "Hide" : "Show"; };
+  $("authForm").onsubmit = async e => {
+    e.preventDefault();
+    if (!configured) { setStatus("authStatus", "Setup needed: put your login email in FAMILY_EMAIL inside index.html.", "error"); return; }
+    $("authSubmit").disabled = true; setStatus("authStatus", "Checking…");
+    try {
+      const { error } = await db.auth.signInWithPassword({ email: FAMILY_EMAIL, password: $("key").value.trim() });
+      if (error) throw error;
+      $("key").value = ""; setStatus("authStatus", ""); await startApp();
+    } catch (err) {
+      setStatus("authStatus", /invalid/i.test(err.message) ? "That key is not correct. Check it and try again." : err.message, "error");
+    } finally { $("authSubmit").disabled = false; }
+  };
+  $("logoutBtn").onclick = async () => { if (realtime) await db.removeChannel(realtime); await db.auth.signOut(); readings = []; showAuth(); $("key").focus(); };
+
+  /* ---------- data ---------- */
+  async function startApp() { showApp(); await loadReadings(); subscribe(); }
+  async function loadReadings() {
+    const { data, error } = await db.from("bp_readings").select("*").order("taken_at", { ascending: false });
+    if (error) { alert("Could not load readings: " + error.message); return; }
+    readings = data || []; render();
+  }
+  function subscribe() {
+    if (realtime) db.removeChannel(realtime);
+    realtime = db.channel("bp-readings-sync").on("postgres_changes", { event: "*", schema: "public", table: "bp_readings" }, () => loadReadings()).subscribe();
+  }
+  function filtered() {
+    const n = $("rangeSelect").value; if (n === "all") return readings;
+    const cut = Date.now() - Number(n) * 86400000;
+    return readings.filter(r => new Date(r.taken_at).getTime() >= cut);
+  }
+
+  /* ---------- averages ---------- */
+  function stats(a) {
+    const s = a.map(r => +r.sys), d = a.map(r => +r.dia);
+    return { n: a.length, sys: mean(s), dia: mean(d), pul: mean(a.map(pulseOf).filter(v => v !== null)), pp: mean(s.map((v, i) => v - d[i])), map: mean(s.map((v, i) => (v + 2 * d[i]) / 3)) };
+  }
+  function avgCard(cls, icon, title, sub, a, more) {
+    const s = stats(a);
+    return `<div class="avg ${cls}"><div class="avg-h"><span class="ic">${icon}</span><div><b>${title}</b><div class="sub">${sub}</div></div></div>
+      <div class="big">${f(s.sys)}<i>/</i>${f(s.dia)}</div><div class="sub">mmHg</div>
+      <div class="line">♥ Pulse <b>${f(s.pul)}</b> per min</div>
+      <div class="line sub">${s.n} reading${s.n === 1 ? "" : "s"}${more && s.n ? ", pulse pressure " + f(s.pp) + ", MAP " + f(s.map) : ""}</div></div>`;
+  }
+  function render() {
+    const data = filtered(), range = $("rangeSelect").selectedOptions[0].text.toLowerCase();
+    const last24 = readings.filter(r => new Date(r.taken_at).getTime() >= Date.now() - 86400000);
+    $("avgs").innerHTML =
+      avgCard("d", "⏱", "Last 24 hours", "All sessions", last24) +
+      avgCard("m", "☀", "Morning average", range, data.filter(r => r.session === "Morning")) +
+      avgCard("e", "☾", "Evening average", range, data.filter(r => r.session === "Evening")) +
+      avgCard("a", "∑", "All readings", range, data, true);
+    $("rangeLabel").textContent = "Morning, evening and all readings use: " + range;
+    $("historyCount").textContent = readings.length + " records";
+    const box = $("readingAlert");
+    const high = data.some(r => +r.sys >= 180 || +r.dia >= 120), low = data.some(r => +r.sys < 90 || +r.dia < 60);
+    box.classList.remove("danger", "hidden");
+    if (high) { box.classList.add("danger"); box.textContent = "One or more readings in this period are very high (SYS 180 or more, or DIA 120 or more). Repeat the measurement after at least 1 minute. If it stays this high, contact a doctor promptly. Get emergency help if there is chest pain, breathlessness, weakness, numbness, vision changes or difficulty speaking."; }
+    else if (low) { box.textContent = "One or more readings are low (SYS under 90 or DIA under 60). Note any symptoms and discuss repeated low readings with a doctor."; }
+    else box.classList.add("hidden");
+    renderDaily(data); renderHistory(); renderCharts(data); updateSitting();
+  }
+  function renderDaily(data) {
+    const days = {};
+    data.forEach(r => { const k = new Date(r.taken_at).toLocaleDateString("en-CA"); (days[k] = days[k] || { Morning: [], Evening: [] }); if (days[k][r.session]) days[k][r.session].push(r); });
+    const cell = a => { if (!a.length) return '<span class="muted">—</span>'; const s = stats(a); return `<strong>${f(s.sys)}/${f(s.dia)}</strong> ♥${f(s.pul)} <span class="sub">(${a.length})</span>`; };
+    const keys = Object.keys(days).sort().reverse();
+    $("dailyBody").innerHTML = keys.length ? keys.map(k => `<tr><td>${new Date(k + "T12:00").toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })}</td><td>${cell(days[k].Morning)}</td><td>${cell(days[k].Evening)}</td></tr>`).join("") : '<tr><td colspan="3" class="empty">No readings in this period.</td></tr>';
+  }
+  function renderHistory() {
+    const body = $("historyBody");
+    if (!readings.length) { body.innerHTML = '<tr><td colspan="8" class="empty">No readings yet. Add the first one above.</td></tr>'; return; }
+    body.innerHTML = readings.map(r => `<tr><td>${fmtDate(r.taken_at)}</td><td><span class="pill">${esc(r.session)}</span></td><td><strong>${r.sys}</strong></td><td><strong>${r.dia}</strong></td><td>${r.pulse == null ? "—" : r.pulse}</td><td>${r.sys - r.dia}</td><td>${esc(r.notes || "—")}</td><td><div class="row-actions"><button class="btn small" data-edit="${r.id}">Edit</button><button class="btn small" data-delete="${r.id}">Delete</button></div></td></tr>`).join("");
+  }
+  function renderCharts(data = filtered()) {
+    const css = n => getComputedStyle(root).getPropertyValue(n);
+    const o = [...data].sort((a, b) => new Date(a.taken_at) - new Date(b.taken_at));
+    const labels = o.map(r => new Date(r.taken_at).toLocaleString([], { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }));
+    const opts = { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" }, plugins: { legend: { labels: { color: css("--muted") } } }, scales: { x: { ticks: { color: css("--muted"), maxTicksLimit: 6 }, grid: { display: false } }, y: { ticks: { color: css("--muted") }, grid: { color: css("--line") } } } };
+    const ds = (label, arr, c) => ({ label, data: arr, borderColor: c, backgroundColor: c, tension: .3, pointRadius: 3, spanGaps: true });
+    if (bpChart) bpChart.destroy(); if (pulseChart) pulseChart.destroy();
+    bpChart = new Chart($("bpChart"), { type: "line", data: { labels, datasets: [ds("SYS", o.map(r => r.sys), "#dc6b54"), ds("DIA", o.map(r => r.dia), "#4387d8")] }, options: opts });
+    pulseChart = new Chart($("pulseChart"), { type: "line", data: { labels, datasets: [ds("Pulse", o.map(pulseOf), "#239a78")] }, options: opts });
+  }
+  $("rangeSelect").onchange = render;
+
+  /* ---------- entry form ---------- */
+  const autoSession = d => { const h = d.getHours(); return h < 12 ? "Morning" : h >= 16 ? "Evening" : "Other"; };
+  const getSession = () => document.querySelector("input[name=period]:checked").value;
+  const setSession = v => { document.querySelector(`input[name=period][value="${v}"]`).checked = true; };
+  function updateSitting() {
+    const s = getSession(), day = $("takenAt").value.slice(0, 10), el = $("sitting");
+    if (s === "Other" || !day) { el.textContent = ""; return; }
+    const n = readings.filter(r => r.session === s && r.id !== editingId && localDateTime(new Date(r.taken_at)).slice(0, 10) === day).length;
+    el.textContent = n ? `${n} reading${n > 1 ? "s" : ""} already saved for this ${s.toLowerCase()} on this date. This will be number ${n + 1}.` : `No ${s.toLowerCase()} readings saved yet on this date.`;
+  }
+  function resetForm(keepSession) {
+    const keep = keepSession ? getSession() : null;
+    editingId = null; $("readingForm").reset();
+    const now = new Date(); $("takenAt").value = localDateTime(now); setSession(keep || autoSession(now));
+    $("formTitle").textContent = "Add a reading"; $("saveReading").textContent = "Save reading"; $("cancelEdit").classList.add("hidden"); updateSitting();
+  }
+  ["sys", "dia"].forEach((id, i) => $(id).addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $(["dia", "pulse"][i]).focus(); } }));
+  $("takenAt").onchange = () => { if (!editingId) setSession(autoSession(new Date($("takenAt").value))); updateSitting(); };
+  document.querySelectorAll("input[name=period]").forEach(r => r.onchange = updateSitting);
+  $("cancelEdit").onclick = () => { resetForm(false); setStatus("readingStatus", ""); };
+
+  $("readingForm").onsubmit = async e => {
+    e.preventDefault();
+    const sys = Number($("sys").value), dia = Number($("dia").value), pv = $("pulse").value.trim();
+    if (sys <= dia) { setStatus("readingStatus", "The upper number (SYS) should be higher than the lower (DIA). Please check them.", "error"); return; }
+    const payload = { sys, dia, pulse: pv === "" ? null : Number(pv), taken_at: new Date($("takenAt").value).toISOString(), session: getSession(), notes: $("notes").value.trim() || null };
+    const wasEdit = !!editingId; $("saveReading").disabled = true;
+    try {
+      const res = wasEdit ? await db.from("bp_readings").update(payload).eq("id", editingId) : await db.from("bp_readings").insert(payload);
+      if (res.error) throw res.error;
+      resetForm(!wasEdit); await loadReadings();
+      setStatus("readingStatus", wasEdit ? "Reading updated." : "Saved. You can enter the next reading.", "good");
+      if (!wasEdit) $("sys").focus();
+    } catch (err) { setStatus("readingStatus", err.message, "error"); }
+    finally { $("saveReading").disabled = false; }
+  };
+
+  $("historyBody").onclick = async e => {
+    const ed = e.target.dataset.edit, del = e.target.dataset.delete;
+    if (ed) {
+      const r = readings.find(x => x.id === ed); if (!r) return;
+      editingId = ed; $("sys").value = r.sys; $("dia").value = r.dia; $("pulse").value = r.pulse ?? "";
+      $("takenAt").value = localDateTime(new Date(r.taken_at)); setSession(r.session); $("notes").value = r.notes || "";
+      $("formTitle").textContent = "Edit reading"; $("saveReading").textContent = "Update reading"; $("cancelEdit").classList.remove("hidden"); updateSitting();
+      $("sys").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    if (del && confirm("Delete this reading permanently?")) {
+      const { error } = await db.from("bp_readings").delete().eq("id", del);
+      if (error) alert(error.message); else await loadReadings();
+    }
+  };
+
+  $("exportBtn").onclick = () => {
+    const rows = [["Date/time", "Session", "SYS mmHg", "DIA mmHg", "Pulse/min", "Notes"], ...readings.map(r => [r.taken_at, r.session, r.sys, r.dia, r.pulse ?? "", r.notes || ""])];
+    const csv = rows.map(row => row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(",")).join("\r\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "bp-readings.csv"; a.click(); URL.revokeObjectURL(a.href);
+  };
+  $("printBtn").onclick = () => window.print();
+
+  /* ---------- start ---------- */
+  resetForm(false);
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  db.auth.getSession().then(({ data }) => { if (data.session) startApp(); else $("key").focus(); });
+  db.auth.onAuthStateChange((_e, session) => { if (session && $("appView").classList.contains("hidden")) startApp(); });
+})();
+</script>
+</body>
+</html>
